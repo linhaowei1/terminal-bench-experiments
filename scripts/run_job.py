@@ -421,8 +421,58 @@ async def upload_trial_to_storage(result: TrialResult) -> str | None:
             tmp_path.unlink()
 
 
+def cleanup_codex_temp_runtime_dirs(result: TrialResult) -> None:
+    """Drop Codex runtime dirs before archive upload."""
+    trial_path = Path(urlparse(result.trial_uri).path)
+    agent_tmp_path = trial_path / "agent" / "tmp"
+
+    if not agent_tmp_path.exists():
+        return
+
+    removed_count = 0
+    for codex_dir in agent_tmp_path.glob("arg*/codex-*"):
+        if codex_dir.is_dir():
+            try:
+                shutil.rmtree(codex_dir)
+                removed_count += 1
+            except OSError as exc:
+                print(f"Failed to remove Codex temp runtime dir {codex_dir}: {exc}")
+
+    if removed_count:
+        print(f"Removed {removed_count} Codex temp runtime dirs from {trial_path}")
+
+
+def cleanup_terminus_session_artifacts(result: TrialResult) -> None:
+    """Drop > 10MB Terminus-2 session logs before archive upload."""
+    trial_path = Path(urlparse(result.trial_uri).path)
+    agent_path = trial_path / "agent"
+
+    total = 0
+    artifact_paths = [
+        agent_path / "recording.cast",
+        agent_path / "terminus_2.pane",
+    ]
+
+    for path in artifact_paths:
+        if path.is_file():
+            total += path.stat().st_size
+
+    if total > 10 * 1024 * 1024:
+        print(
+            f"Removing Terminus-2 session artifacts totaling "
+            f"{total / (1024 * 1024):.2f} MB from {trial_path}"
+        )
+        for path in artifact_paths:
+            try:
+                if path.is_file():
+                    path.unlink()
+            except OSError as exc:
+                print(f"Failed to remove Terminus-2 artifact {path}: {exc}")
+
 async def insert_trial_into_db(event: TrialHookEvent):
     result = event.result
+    cleanup_codex_temp_runtime_dirs(result)
+    cleanup_terminus_session_artifacts(result)
     storage_url = await upload_trial_to_storage(result)
 
     trial_uri = storage_url
@@ -678,11 +728,6 @@ async def main():
         action="append",
         help="Filter error types",
     )
-    parser.add_argument(
-        "--override-n-concurrent-trials",
-        type=int,
-        help="Override n_concurrent_trials for this run, including resume runs.",
-    )
 
     args = parser.parse_args()
 
@@ -694,12 +739,6 @@ async def main():
         config_dict = yaml.safe_load(config_text)
 
     config = JobConfig.model_validate(config_dict)
-    if args.override_n_concurrent_trials is not None:
-        if args.override_n_concurrent_trials <= 0:
-            raise ValueError("--override-n-concurrent-trials must be a positive integer")
-        config.n_concurrent_trials = args.override_n_concurrent_trials
-    _sanitize_ambient_anthropic_proxy_env(config)
-    _sanitize_ambient_codex_auth(config)
 
     job_path = config.jobs_dir / config.job_name
 
@@ -708,10 +747,17 @@ async def main():
             (job_path / "config.json").read_text()
         )
 
-        if not _configs_match_for_resume(existing_config, config):
+        if existing_config != config:
+            config_diff = "\n".join(
+                format_config_diff(
+                    existing_config.model_dump(mode="json"),
+                    config.model_dump(mode="json"),
+                )
+            )
             raise ValueError(
                 f"Job directory {job_path} already exists and cannot be "
-                "resumed with a different config."
+                "resumed with a different config.\n\n"
+                f"Config diff:\n{config_diff}"
             )
 
         filter_error_types_set = set(args.filter_error_types)
