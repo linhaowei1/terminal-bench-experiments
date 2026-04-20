@@ -47,6 +47,39 @@ job_template:
     force_build: false
     delete: true
 adapters:
+  terminus-2__opus-4.6:
+    agent:
+      name: terminus-2
+      model_name: anthropic/claude-opus-4-6
+    metadata:
+      display_name: Terminus 2 / Claude Opus 4.6
+      runner: terminus-2
+      family: terminus-2
+      model_name: anthropic/claude-opus-4-6
+      generated_by: generate_model_coordination_manifest.py
+      provider: anthropic
+  terminus-2__sonnet-4.6:
+    agent:
+      name: terminus-2
+      model_name: anthropic/claude-sonnet-4-6
+    metadata:
+      display_name: Terminus 2 / Claude Sonnet 4.6
+      runner: terminus-2
+      family: terminus-2
+      model_name: anthropic/claude-sonnet-4-6
+      generated_by: generate_model_coordination_manifest.py
+      provider: anthropic
+  terminus-2__haiku-4.5:
+    agent:
+      name: terminus-2
+      model_name: anthropic/claude-haiku-4-5-20251001
+    metadata:
+      display_name: Terminus 2 / Claude Haiku 4.5
+      runner: terminus-2
+      family: terminus-2
+      model_name: anthropic/claude-haiku-4-5-20251001
+      generated_by: generate_model_coordination_manifest.py
+      provider: anthropic            
   terminus-2__glm-5:
     agent:
       name: terminus-2
@@ -161,6 +194,21 @@ adapters:
       model_name: gemini/gemini-3-flash-preview
       generated_by: generate_model_coordination_manifest.py
       provider: gemini
+  terminus-2__qwen3-max:
+    agent:
+      name: terminus-2
+      model_name: openai/qwen3-max
+      kwargs:
+        api_base: http://pp-api-ec82a10d0c5d226c.elb.us-west-2.amazonaws.com:3000/v1
+        llm_kwargs:
+          api_key: QWEN_API_KEY_PLACEHOLDER
+    metadata:
+      display_name: Terminus 2 / Qwen3 Max
+      runner: terminus-2
+      family: terminus-2
+      model_name: qwen3-max
+      generated_by: generate_model_coordination_manifest.py
+      provider: openai
   codex__gpt-5.4:
     agent:
       name: codex
@@ -226,6 +274,72 @@ adapters:
       model_name: gemini/gemini-3-flash-preview
       generated_by: generate_model_coordination_manifest.py
       provider: gemini
+  claude-code__opus-4.6:
+    agent:
+      name: claude-code
+      model_name: anthropic/claude-opus-4-6
+      kwargs:
+        version: 2.1.81
+      env:
+        ANTHROPIC_AUTH_TOKEN: ANTHROPIC_AUTH_TOKEN_PLACEHOLDER
+        ANTHROPIC_BASE_URL: https://api.anthropic.com
+        ANTHROPIC_MODEL: claude-opus-4-6
+        ANTHROPIC_DEFAULT_SONNET_MODEL: claude-opus-4-6
+        ANTHROPIC_DEFAULT_OPUS_MODEL: claude-opus-4-6
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: claude-opus-4-6
+        CLAUDE_CODE_SUBAGENT_MODEL: claude-opus-4-6
+        API_TIMEOUT_MS: '3000000'
+    metadata:
+      display_name: Claude Code / Claude Opus 4.6
+      runner: claude-code
+      family: claude-code
+      model_name: anthropic/claude-opus-4-6
+      generated_by: generate_model_coordination_manifest.py
+      provider: anthropic
+  claude-code__sonnet-4.6:
+    agent:
+      name: claude-code
+      model_name: anthropic/claude-sonnet-4-6
+      kwargs:
+        version: 2.1.81
+      env:
+        ANTHROPIC_AUTH_TOKEN: ANTHROPIC_AUTH_TOKEN_PLACEHOLDER
+        ANTHROPIC_BASE_URL: https://api.anthropic.com
+        ANTHROPIC_MODEL: claude-sonnet-4-6
+        ANTHROPIC_DEFAULT_SONNET_MODEL: claude-sonnet-4-6
+        ANTHROPIC_DEFAULT_OPUS_MODEL: claude-sonnet-4-6
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: claude-sonnet-4-6
+        CLAUDE_CODE_SUBAGENT_MODEL: claude-sonnet-4-6
+        API_TIMEOUT_MS: '3000000'
+    metadata:
+      display_name: Claude Code / Claude Sonnet 4.6
+      runner: claude-code
+      family: claude-code
+      model_name: anthropic/claude-sonnet-4-6
+      generated_by: generate_model_coordination_manifest.py
+      provider: anthropic
+  claude-code__haiku-4.5:
+    agent:
+      name: claude-code
+      model_name: anthropic/claude-haiku-4-5-20251001
+      kwargs:
+        version: 2.1.81
+      env:
+        ANTHROPIC_AUTH_TOKEN: ANTHROPIC_AUTH_TOKEN_PLACEHOLDER
+        ANTHROPIC_BASE_URL: https://api.anthropic.com
+        ANTHROPIC_MODEL: claude-haiku-4-5-20251001
+        ANTHROPIC_DEFAULT_SONNET_MODEL: claude-haiku-4-5-20251001
+        ANTHROPIC_DEFAULT_OPUS_MODEL: claude-haiku-4-5-20251001
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: claude-haiku-4-5-20251001
+        CLAUDE_CODE_SUBAGENT_MODEL: claude-haiku-4-5-20251001
+        API_TIMEOUT_MS: '3000000'
+    metadata:
+      display_name: Claude Code / Claude Haiku 4.5
+      runner: claude-code
+      family: claude-code
+      model_name: anthropic/claude-haiku-4-5-20251001
+      generated_by: generate_model_coordination_manifest.py
+      provider: anthropic      
   claude-code__glm-5:
     agent:
       name: claude-code
@@ -337,9 +451,28 @@ adapters:
       model_name: anthropic/mimo-v2-pro
       generated_by: generate_model_coordination_manifest.py
       provider: xiaomi_mimo
+  qwen-coder__qwen3-max:
+    agent:
+      name: qwen-coder
+      model_name: qwen3-max
+      kwargs:
+        version: 0.14.5
+      env:
+        OPENAI_API_KEY: QWEN_API_KEY_PLACEHOLDER
+        OPENAI_BASE_URL: http://pp-api-ec82a10d0c5d226c.elb.us-west-2.amazonaws.com:3000/v1
+    metadata:
+      display_name: Qwen Coder / Qwen3-Max
+      runner: qwen-coder
+      family: qwen-coder
+      model_name: qwen3-max
+      generated_by: generate_model_coordination_manifest.py
+      provider: qwen      
 contributors:
   local:
     adapters:
+    - terminus-2__opus-4.6
+    - terminus-2__sonnet-4.6
+    - terminus-2__haiku-4.5
     - terminus-2__glm-5
     - terminus-2__deepseek-reasoner
     - terminus-2__minimax-m2.5
@@ -350,13 +483,18 @@ contributors:
     - terminus-2__gpt-5-nano
     - terminus-2__gemini-3.1-pro-preview
     - terminus-2__gemini-3-flash-preview
+    - terminus-2__qwen3-max
     - codex__gpt-5.4
     - codex__gpt-5-mini
     - codex__gpt-5-nano
     - gemini-cli__gemini-3.1-pro-preview
     - gemini-cli__gemini-3-flash-preview
+    - claude-code__opus-4.6
+    - claude-code__sonnet-4.6
+    - claude-code__haiku-4.5
     - claude-code__glm-5
     - claude-code__deepseek-chat
     - claude-code__minimax-m2.5
     - claude-code__kimi-k2.5
     - claude-code__mimo-v2-pro
+    - qwen-coder__qwen3-max
