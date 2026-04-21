@@ -285,6 +285,34 @@ def _patched_resume_equalities():
         yield
 
 
+def _force_overwrite_configs(job_path: Path, config: JobConfig, config_dict: dict) -> None:
+    # Overwrite existing job's config.json, and all trial config.json files with the latest environment and task variables.
+    job_config_data = json.loads((job_path / "config.json").read_text())
+    job_config_data["environment"] = config_dict["environment"]
+    n_concurrent = (config_dict.get("orchestrator") or {}).get("n_concurrent_trials")
+    if n_concurrent is not None:
+        job_config_data["n_concurrent_trials"] = n_concurrent
+    (job_path / "config.json").write_text(json.dumps(job_config_data, indent=4))
+    print("finish overwrite")
+    new_task_by_name: dict[str, dict] = {
+        Path(task.path).name: task.model_dump(mode="json")
+        for dataset in config.datasets
+        for task in dataset.get_task_configs()
+    }
+    for trial_dir in job_path.iterdir():
+        if not trial_dir.is_dir():
+            continue
+        trial_config_path = trial_dir / "config.json"
+        if trial_config_path.exists():
+            trial_config_data = json.loads(trial_config_path.read_text())
+            trial_config_data["environment"] = job_config_data["environment"]
+            task_name = Path(trial_config_data["task"]["path"]).name
+            if task_name in new_task_by_name:
+                trial_config_data["task"] = new_task_by_name[task_name]
+                print(trial_config_data["task"])
+            trial_config_path.write_text(json.dumps(trial_config_data, indent=4))
+
+
 async def create_job_compat(config: JobConfig) -> Job:
     """
     Create a Harbor job across old and new Harbor versions.
@@ -728,6 +756,11 @@ async def main():
         action="append",
         help="Filter error types",
     )
+    parser.add_argument(
+        "--force-config",
+        action="store_true",
+        help="Overwrite existing job & trial config.json with the new config to avoid conflict",
+    )
 
     args = parser.parse_args()
 
@@ -741,6 +774,9 @@ async def main():
     config = JobConfig.model_validate(config_dict)
 
     job_path = config.jobs_dir / config.job_name
+
+    if args.force_config and (job_path / "config.json").exists():
+        _force_overwrite_configs(job_path, config, config_dict)
 
     if (job_path / "config.json").exists() and args.filter_error_types:
         existing_config = JobConfig.model_validate_json(
